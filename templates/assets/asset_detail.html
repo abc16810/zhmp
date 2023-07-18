@@ -1,0 +1,309 @@
+{% extends 'base/_base.html' %}
+{% load static %}
+{% block header %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">资产详情</h1>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">首页</a></li>
+                        <li class="breadcrumb-item active">资产</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div>
+    </div>
+{% endblock %}
+{% block content %}
+    <!-- Main content -->
+    <section class="content">
+
+        <!-- Default box -->
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 col-md-12 order-2 order-md-1">
+                        <div class="row" id="base-tags">
+                        </div>
+                        <!-- info row -->
+                        <div class="row  mb-3" id="invoice-info">
+                        </div>
+                        <!-- /.row -->
+                        <!-- Table row -->
+                        <div class="row mb-3">
+                            <div class="col-12 table-responsive">
+                                <h5>网卡信息</h5>
+                                <table class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>名称</th>
+                                        <th>MAC地址</th>
+                                        <th>IP地址</th>
+                                        <th>掩 码</th>
+                                        <th>网 关</th>
+                                        <th>速 率</th>
+                                        <th>模块</th>
+                                        <th>激活</th>
+                                        <th>默认IP</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr id="nic-list">
+                                        <td colspan="9">暂无</td>
+                                    </tr>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- /.col -->
+                        </div>
+                        <div class="row mb-3" id="ram-list">
+                        </div>
+                        <!-- /.row -->
+                        <div class="row" id="disk-list">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="row no-print">
+                    <div class="col-12">
+                      <a href="invoice-print.html" rel="noopener" target="_blank" class="btn btn-default"><i class="fas fa-print"></i> Print</a>
+                      <button type="button" class="btn btn-success float-right"><i class="far fa-credit-card"></i> 更新资产
+                      </button>
+                    </div>
+                  </div>
+            </div>
+        </div>
+
+    </section>
+
+{% endblock %}
+
+{% block js %}
+    <script>
+        let Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+        $(function () {
+            let url = "{% url 'api-asset:assets-detail' pk=pk %}";
+            $.ajax({
+                dataType: "JSON",
+                url:url, //请求地址
+                type:"GET",  //提交类似
+                contentType: "application/json",
+                success:function(response){
+                    if (Object.keys(response).length > 0){
+                        switch (response["status"])
+                        {
+                            case 'on':
+                                status = '<span class="right badge badge-primary">使用中</span>';
+                                break;
+                            case 'maintenance':
+                                status = '<span class="right badge badge-danger">维修中</span>';
+                                break;
+                            case 'other':
+                                status = '<span class="right badge badge-info">其它状态</span>';
+                                break;
+                            case 'off':
+                                status = '<span class="right badge badge-secondary">未使用</span>';
+                                break;
+                        }
+                        let base_tags  = '';
+                        let base_list = '';
+                        base_list = '<div class="col-sm-3">\n' +
+                            '                                <br>\n' +
+                            '                                资产类型: '+ assets_type_display(response['assets_type']) +'<br>\n' +
+                            '                                管理IP: <b>'+ response["management_ip"] +'</b><br>\n' +
+                            '                                资产组:  <b> '+ response["group"] +'</b><br>\n' +
+                            '                                资产U数:  <b> '+ response["u"] +'</b><br>\n' +
+                            '                            </div>\n' +
+                            '                            <div class="col-sm-3">\n' +
+                            '                                <br>\n' +
+                            '                                资产状态: '+ status +'<br>\n' +
+                            '                                资产编号: <b>'+ response["number"] +'</b><br>\n' +
+                            '                                资产SN:  <b> '+ response["sn"] +'</b><br>\n' +
+                            '                                资产型号:  <b> '+ response["model"] +'</b><br>\n' +
+                            '                            </div>\n' +
+                            '                            <div class="col-sm-3">\n' +
+                            '                                <br>\n' +
+                            '                                <b>创建日期:</b> '+ response["created_at"] +'<br>\n' +
+                            '                                <b>更新日期:</b> '+ response["updated_at"] +'<br>\n' +
+                            '                                <b>创建者 :</b> '+ response["created_by"] +'<br>\n' +
+                            '                                <b>备注  :</b> '+ response["comment"] +'<br>\n' +
+                            '                            </div>\n' +
+                            '                            <!-- /.col -->';
+                        $("#invoice-info").html(base_list);
+                        if (response["manufacturer"] != undefined && response["manufacturer"] != undefined){
+                            base_tags = '<div class="col-12 col-sm-3">\n' +
+                                '                  <div class="info-box bg-light">\n' +
+                                '                    <div class="info-box-content">\n' +
+                                '                      <span class="info-box-text text-muted">厂商信息</span>\n' +
+                                '                      <span class="info-box-number text-center text-muted mb-0">' +
+                                response["manufacturer"] +  '</span>\n' +
+                                '                        <span class="info-box-number text-center text-muted mb-0">'+
+                                response["version"] +  '</span>\n' +
+                                '                    </div>\n' +
+                                '                  </div>\n' +
+                                '                </div>\n';
+                        }
+                        if (Object.keys(response["serverassets"]).length > 0){
+                            base_tags += '<div class="col-12 col-sm-3">\n' +
+                                '                  <div class="info-box bg-light">\n' +
+                                '                    <div class="info-box-content">\n' +
+                                '<span class="info-box-text text-muted">IP地址-主机名</span>\n' +
+                                '<span class="info-box-number text-center text-muted mb-0">'+
+                                response["serverassets"]["ip"] +'</span>\n' +
+                                '<span class="info-box-number text-center text-muted mb-0">'+
+                                response["serverassets"]["hostname_raw"]+'</span>\n' +
+                                '                    </div>\n' +
+                                '                  </div>\n' +
+                                '                </div>\n' +
+                                '                <div class="col-12 col-sm-3">\n' +
+                                '                  <div class="info-box bg-light">\n' +
+                                '                    <div class="info-box-content">\n' +
+                                '                      <span class="info-box-text text-muted">CPU信息</span>\n' +
+                                '                      <span class="info-box-number text-center text-muted mb-0">'+
+                                response["serverassets"]["cpu_model"] +'</span>\n' +
+                                '                        <span class="info-box-number text-center text-muted mb-0">'+
+                                response["serverassets"]["cpu_core"] + '*' +
+                                response["serverassets"]["cpu_number"]+'</span>\n' +
+                                '                    </div>\n' +
+                                '                  </div>\n' +
+                                '                </div>\n' +
+                                '                <div class="col-12 col-sm-3">\n' +
+                                '                  <div class="info-box bg-light">\n' +
+                                '                    <div class="info-box-content">\n' +
+                                '                      <span class="info-box-text text-muted">系统信息</span>\n' +
+                                '                      <span class="info-box-number text-center text-muted mb-0">' +
+                                response["serverassets"]["platform"] + ' (' +
+                                response["serverassets"]["os_arch"]  + ')' + '</span>\n' +
+                                '                        <span class="info-box-number text-center text-muted mb-0">'+
+                                response["serverassets"]["os"]  + ' ' +
+                                response["serverassets"]["os_version"]+'</span>\n' +
+                                '                    </div>\n' +
+                                '                  </div>\n' +
+                                '                </div>\n' +
+                                '                <div class="col-12 col-sm-3">\n' +
+                                '                  <div class="info-box bg-light">\n' +
+                                '                    <div class="info-box-content">\n' +
+                                '                      <span class="info-box-text text-muted">其它信息</span>\n' +
+                                '                      <span class="info-box-number text-center text-muted mb-0">' +
+                                '总硬盘: '+ response["serverassets"]["disk_total"] +  ' GB</span>\n' +
+                                '                        <span class="info-box-number text-center text-muted mb-0">'+
+                                '总内存: '+ response["serverassets"]["ram_total"] +  ' MB</span>\n' +
+                                '                    </div>\n' +
+                                '                  </div>\n' +
+                                '                </div>\n';
+
+                        }
+                        $("#base-tags").html(base_tags);
+                        let nic_list = '';
+                        if (response["nic"].length){
+                            let nicHtml = '';
+                            for (let i=0; i <response["nic"].length; i++){
+                                let is_default = '<span class="badge bg-secondary">否</span>';
+                                let status = '<td class="text-danger"><i class="fas fa-times"></i></td>';
+                                if ( response["nic"][i]["active"] == 1){
+                                    status = '<td class="text-success"><i class="fas fa-check"></i></td>'
+                                }
+                                if (response["nic"][i]["is_ipv4_default"]){
+                                    is_default = '<span class="badge bg-info">是</span>'
+                                }
+                                nicHtml += '</tr>' +
+                                    '<td>'+ response["nic"][i]["name"] +'</td>'+
+                                    '<td>'+ response["nic"][i]["mac"] +'</td>' +
+                                    '<td>'+ response["nic"][i]["ip"] +'</td>' +
+                                    '<td>'+ response["nic"][i]["netmask"] +'</td>' +
+                                    '<td>'+ response["nic"][i]["gateway"] +'</td>' +
+                                    '<td>'+ response["nic"][i]["speed"] +'</td>' +
+                                    '<td>'+ response["nic"][i]["module"] +'</td>' +
+                                    '<td>'+ is_default +'</td>' +
+                                    status +
+                                    '</tr>'
+                            };
+                            nic_list = nic_list + nicHtml
+                            $("#nic-list").html(nic_list)
+                        }
+
+                        let disk_list = '';
+                        if (response["disk"].length){
+                            let diskHtml = '';
+                            disk_list += '<div class="col-12">\n' +
+                                '<h5>硬盘信息</h5>\n' +
+                                '</div>';
+                            for (let i=0; i <response["disk"].length; i++){
+                                diskHtml += '<div class="col-6"><address>' +
+                                        '<strong>'+ response["disk"][i]["name"] +'</strong><br>' +
+                                        '序列号：' + response["disk"][i]["wwn"] + '<br>' +
+                                        '生产商: ' + response["disk"][i]["vendor"] + '<br>' +
+                                        '型 号: ' + response["disk"][i]["model"] + '<br>' +
+                                        '大 小: '+ response["disk"][i]["size"] + 'GB <br>' +
+                                        '控制器：' + response["disk"][i]["host"] + '<br>' +
+                                        '</address></div>';
+                                if (Object.keys(response["disk"][i]["partitions"]).length){
+                                    diskHtml += '<div class="col-6"><div class="table-responsive">\n' +
+                                            '              <table class="table">\n';
+                                    let info = '';
+                                    for (info in response["disk"][i]["partitions"]){
+                                        diskHtml += '<tr><th>'+  info +'</th>' +
+                                            '<td>'+ response["disk"][i]["partitions"][info]['size'] +'</td></tr>'
+                                    }
+                                    diskHtml += '</table></div></div>'
+                                }
+
+                            }
+                            disk_list += diskHtml;
+                            $("#disk-list").html(disk_list)
+                         }
+                        let ram_list = '';
+                        if (response["ram"].length){
+                            ram_list += '<div class="col-12"><h5>内存信息</h5></div>' +
+                                    '<div class="col-4">最大内存： <b>'+ response["ram"][0]["ram_max_size"] +'</b>' +
+                                    '<br>' +
+                                    '最大插槽： <b>'+ response["ram"][0]["ram_max_slot"] +'</b><br></div>' +
+                                    '                            <div class="col-8 table-responsive">\n' +
+                                    '                                <table class="table table-striped">\n' +
+                                    '                                    <thead>\n' +
+                                    '                                    <tr>\n' +
+                                    '                                        <th>sn</th>\n' +
+                                    '                                        <th>型 号</th>\n' +
+                                    '                                        <th>插 槽</th>\n' +
+                                    '                                        <th>大 小</th>\n' +
+                                    '                                        <th>生产商</th>\n' +
+                                    '                                        <th>速 率</th>\n' +
+                                    '                                    </tr>\n' +
+                                    '                                    </thead>\n' +
+                                    '                                    <tbody>\n'
+                            let ram_tr = '';
+                            for (let i=0; i <response["ram"].length; i++){
+                                ram_tr += '<tr><td>'+ response["ram"][i]["sn"] +'</td>'+
+                                        '<td>'+ response["ram"][i]["model"] +'</td>' +
+                                        '<td>'+ response["ram"][i]["slot"] +'</td>' +
+                                        '<td>'+ response["ram"][i]["size"] +'MB </td>' +
+                                        '<td>'+ response["ram"][i]["manufactory"] +'</td>' +
+                                        '<td>'+ response["ram"][i]["speed"] +'</td></tr>';
+                            }
+                            ram_list += ram_tr + '</tbody></table></div>'
+                            $("#ram-list").html(ram_list)
+                        }
+                    }
+                    console.log(response)
+                },
+                error:function(response){
+                    Toast.fire({
+                        icon: 'error',
+                        text: response.responseText,
+                        title: "Request Failed!"
+                    })
+                }
+            })
+        })
+    </script>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends 'base/_base.html' %}
+{% load static %}
+{% block preloader %}
+{% endblock %}
+
+{% block header %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">机柜详情</h1>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">首页</a></li>
+                        <li class="breadcrumb-item active">机柜</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div>
+    </div>
+{% endblock %}
+{% block content %}
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="sticky-top mb-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title" id="name">加载中</h4>
+                        </div>
+                        <div class="card-body">
+                            <!-- the events -->
+                            <div id="Cabinetinfo">
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                    <!-- /.card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">关联资产</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group">
+                                <input id="new-event" type="text" class="form-control" placeholder="关联资产">
+                                <div class="input-group-append">
+                                    <button id="add-new-event" type="button" class="btn btn-primary">关联</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">资产</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body table-responsive p-0" style="height: 500px;">
+                        <table class="table table-head-fixed text-nowrap">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>编号</th>
+                                <th>类型</th>
+                                <th>状态</th>
+                                <th>U数</th>
+                                <th>IP</th>
+                                <th>主机名</th>
+                                <th>系统</th>
+                                <th>CPU</th>
+                            </tr>
+                            </thead>
+                            <tbody id="assets-list">
+
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+            </div>
+        </div>
+        <!-- /.row -->
+    </section>
+    <!-- /.content -->
+{% endblock %}
+{% block js %}
+    <script>
+        let Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+        $(function () {
+            let url = "{% url 'api-asset:cabinet-detail' pk=pk %}";
+            $.ajax({
+                dataType: "JSON",
+                url:url, //请求地址
+                type:"GET",  //提交类似
+                contentType: "application/json",
+                success:function(response){
+                    console.log(response)
+                    let base_info = '';
+                    $("#name").html(response["cabinet_name"] + ' 机柜');
+                    let idc_detail_url = "{% url 'idc-detail' pk='00000' %}".replace('00000', response["cabinet_idc"]["idc_id"])
+                    base_info = '<b>机柜带宽:</b> '+ response["cabinet_band"] + ' MB <br>\n' +
+                        '        <b>机柜费用:</b> '+ response["cabinet_cost"]+' ￥ <br>\n' +
+                        '        <b>过期时间:</b> '+ response["expired_time"]+'<br>\n' +
+                        '        <b>备注:</b> '+ response["cabinet_comment"]+'<br>\n' +
+                        '        <b>创建时间:</b> '+ response["created_at"]+'<br>\n' +
+                        '        <b>更新时间:</b> '+ response["updated_at"]+'<br>\n' +
+                        '        <b>所属机房:</b> <a href="'+ idc_detail_url +'">'+ response["cabinet_idc"]['idc_name']+
+                        '</a><br>\n'
+
+                    $("#Cabinetinfo").html(base_info);
+                    if (response["assets"].length){
+                        let assets_list = '';
+                        for (let i=0; i <response["assets"].length; i++){
+                            assets_list += '<tr>' +
+                                '      <td><span class="badge badge-success">'+ response["assets"][i].id +'</span></td>' +
+                                '      <td>'+ response["assets"][i].number +'</td>\n' +
+                                '      <td>'+ response["assets"][i]["get_assets_type_display"] +'</td>' +
+                                '      <td>'+ response["assets"][i]["get_status_display"] +'</td>\n' +
+                                '      <td>'+ response["assets"][i]["get_u_display"] +'</td>\n'
+
+                            if (Object.keys(response["assets"][i].detail).length){
+                                assets_list += '<td>'+ response["assets"][i].detail.ip +'</td>' +
+                                        '<td>'+ response["assets"][i].detail["hostname_raw"] +'</td>' +
+                                        '<td>'+ response["assets"][i].detail["system"] +'</td>' +
+                                        '<td>'+ response["assets"][i].detail["cpu"] +'</td></tr>'
+                            } else {
+                                assets_list += '</tr>'
+                            }
+
+                        }
+                        $("#assets-list").html(assets_list)
+                    } else {
+                        $("#assets-list").html('<tr><td>暂无</td></tr>')
+                    }
+                },
+                error:function(response){
+                    Toast.fire({
+                        icon: 'error',
+                        text: response.responseText,
+                        title: "Request Failed!"
+                    })
+                }
+            })
+        })
+    </script>
+{% endblock %}

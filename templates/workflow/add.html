@@ -1,0 +1,309 @@
+{% extends 'base/_base.html' %}
+{% load static mytags %}
+{% block preloader %}
+{% endblock %}
+{% block head_css %}
+    <link href="{% static 'vendor/bootstrap-fileinput/css/fileinput.min.css' %}" media="all" rel="stylesheet" type="text/css" />
+{% endblock %}
+{% block header %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">工单申请</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">首页</a></li>
+                        <li class="breadcrumb-item active">工单申请</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block content %}
+    <section class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-default">
+                    <div class="card-header">
+                        <h3 class="card-title">提交工单</h3>
+
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form role="form" id="workflow_submit" class="form-horizontal">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="inputName">工单主题</label>
+                                        <input type="text" id="name" class="form-control" data-name="上线单名称"
+                                               name="work_name"
+                                               data-placeholder="请输入上线单名称！"
+                                               placeholder="请输入业务工单名称，如:XX项目发布"
+                                               required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputType">工单类型</label>
+                                        <select id="inputType" class="form-control select2bs4" name="work_type" required>
+                                            <option selected="" disabled>选择如下类型</option>
+                                            {% for k, v  in workflow_type.items %}
+                                                <option value="{{ k }}">{{ v }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inputAppGroup">业务组</label>
+                                        <select id="inputAppGroup" class="form-control select2bs4" name="app_group_id">
+                                            <option selected="" disabled="">选择如下业务组</option>
+                                            {% for group in apps_group_list %}
+                                                <option value="{{ group.0 }}">{{ group.1 }}</option>
+                                            {% endfor %}}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="hidden" id="run_date_start" name="run_date_start">
+                                        <input type="hidden" id="run_date_end" name="run_date_end">
+                                        <label>工单周期</label>
+                                        <input type="text" id="run_date_range" name="run_date_range"
+                                               class="form-control" value="" readonly style="background-color: #fff;color: #999 "/>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="inputDescription">工单描述</label>
+                                        <textarea id="inputDescription" class="form-control" rows="5"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>工单文件</label>
+                                        <input id="file-upload" name="file"   type="file"
+                                               class="file-loading" style="display: block" >
+                                    </div>
+                                    <!--审批流程-->
+                                    <input type="hidden" id="workflow_auditors" data-name="审批流程"
+                                           data-placeholder="请配置审批流程！" required>
+                                    <div id="div-workflow_auditors" class="form-group" style="display: none">
+                                        <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <button id="reset" type="reset" class="btn btn-default">撤销</button>
+                                    <input id="btn-submit" type="button" class="btn btn-success" value="提交"/>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+            </div>
+        </div>
+    </section>
+
+{% endblock %}
+{% block js %}
+    <script src="{% static 'vendor/bootstrap-fileinput/js/fileinput.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap-fileinput/locales/zh.js' %}"></script>
+    <!-- jquery-validation -->
+    <script src="{% static 'plugins/jquery-validation/jquery.validate.min.js' %}"></script>
+    <script src="{% static 'plugins/jquery-validation/additional-methods.min.js' %}"></script>
+    <!--初始化时间控件 -->
+    <script>
+
+        $("#run_date_range").daterangepicker({
+            timePicker: true,
+            timePicker24Hour: true,
+            autoApply: true,
+            autoUpdateInput: false,
+            opens: "left",
+            drops: "up",
+            minDate: moment().startOf('minutes'),
+            startDate: moment().startOf('hour'),
+            endDate: moment().startOf('hour'),
+            locale: {
+                "applyLabel": "确定",
+                "cancelLabel": "清空",
+                "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
+                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                "firstDay": 1
+            },
+        }).on('apply.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#333");
+            $("#run_date_start").val(picker.startDate.format('YYYY-MM-DD HH:mm'));
+            $("#run_date_end").val(picker.endDate.format('YYYY-MM-DD HH:mm'));
+            $(this).val(picker.startDate.format('MM-DD HH:mm') + ' / ' + picker.endDate.format('MM-DD HH:mm'));
+        }).on('cancel.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#999");
+            $(this).val('请选择可执行时间范围');
+            $("#run_date_start").val('');
+            $("#run_date_end").val('');
+        });
+    </script>
+    <script>
+        //初始化上传控件
+        function init_upload() {
+            $("#file-upload").fileinput({
+                language: 'zh',
+                allowedFileExtensions: ['pdf','png','jpg','jpeg'],//接收的文件后缀
+                showCaption: true,//是否显示标题
+                initialCaption: '仅支持10M内的文件',
+
+                //defaultPreviewContent: '仅支持10M内的文件',
+                showUpload: false,     //不显示上传按钮
+                showPreview: false,    // 不显示预览,
+                uploadAsync: true,
+                overwriteInitial: false,
+                maxFileSize: 10240,
+                /* 	    dropZoneTitle:"暂不支持拖拽文件上传...", */
+                dropZoneEnabled: false,
+                slugCallback: function(filename) {
+                    return filename.replace('(', '_').replace(']', '_');
+                }
+            })
+        }
+    </script>
+    <script>
+        // 切换组触发工单类型切换事件
+        $("#inputType").change(function () {
+            $("#inputAppGroup").trigger('change')
+        });
+        // 获取审批流程
+        $("#inputAppGroup").change(function () {
+            let url = "{% url 'api-workflow:auditor' %}";
+            let type=$("#inputType").val();
+            let app_group_id = $("#inputAppGroup").val();
+            if (type && app_group_id ) {
+                $.ajax({
+                    type: "post",
+                    url: url,
+                    dataType: "json",
+                    data: {
+                        id: app_group_id,
+                        workflow_type: type,
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            let result = data.data;
+                            $("#workflow_auditors").val(result['auditors']);
+                            $("#workflow_auditors_display").text(result['auditors_display']);
+                            $("#div-workflow_auditors").show();
+                        } else {
+                            Toast.fire({
+                                icon: 'error',
+                                text: data.msg,
+                                title: "操作失败"
+                            });
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                })
+            }
+        })
+
+    </script>
+    <script>
+        function validateForm() {
+            return $("#workflow_submit").validate({
+                rules: {
+                    work_name: {
+                        required: true
+                    },
+                    work_type: {
+                        required: true
+                    },
+                    app_group_id: {
+                        required: true
+                    },
+                    file: {
+                        accept: "image/*,application/pdf",
+                        isfile: true
+                    },
+                    run_date_range: {
+                        required: true
+                    }
+                },
+                messages: {
+                    work_name: {
+                        required: "请输入业务工单名称"
+                    },
+                    work_type: {
+                        required: "请选择业务工单类型"
+                    },
+                    app_group_id: {
+                        required: "请选择业务组"
+                    },
+                    run_date_range: {
+                        required: "请选择时间段"
+                    }
+                },
+                errorElement: 'span',
+                errorPlacement: function (error, element) {
+                    error.addClass('invalid-feedback');
+                    element.closest('.form-group').append(error);
+                },
+                highlight: function (element, errorClass, validClass) {
+                    $(element).addClass('is-invalid');
+                },
+                unhighlight: function (element, errorClass, validClass) {
+                    $(element).removeClass('is-invalid');
+                }
+            });
+        }
+    </script>
+    <script>
+        $(document).ready(function() {
+            // 初始化上传控件
+            init_upload();
+            // 验证
+            $(validateForm());
+            $("#btn-submit").click(function () {
+                $.validator.addMethod('isfile', function(val, el){
+                    return this.optional(el) || el;
+                }, 'INVALID');
+                if(validateForm().form()){
+                    let url = '{% url "api-workflow:add" %}';
+                    let formdata = new FormData(document.getElementById("workflow_submit"));
+                    $.ajax({
+                        type: "post",
+                        url: url,
+                        data: formdata,
+                        processData: false,
+                        contentType: false,
+                        success: function (data) {
+                            if (data.msg) {
+                                Toast.fire({
+                                    icon: 'error',
+                                    text: data.msg,
+                                    title: "操作失败"
+                                });
+                            } else {
+                                window.location.href = data.Location;
+                            }
+                        },
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+                            Toast.fire({
+                                icon: 'error',
+                                text: errorThrown,
+                                title: "操作失败"
+                            });
+                        }
+                    })
+                }
+            });
+            // 重置
+            $("#reset").click(function() {
+                validator.resetForm();
+            });
+
+        });
+    </script>
+{% endblock %}

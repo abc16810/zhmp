@@ -1,0 +1,50 @@
+{% extends 'base/_base.html' %}
+{% load static %}
+{% load mytags %}
+{% block header %}
+{% endblock %}
+{% block content %}
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                {% regroup links_list by nav_type as links %}
+                {% for link in links %}
+                    <div class="col-12 mb-2">
+                        <section class="content-header">
+                            <h4 class="text-primary"><i class="fa fa-tags mr-2"></i>
+                                {{ link.grouper|get_name_display }}</h4>
+                        </section>
+                        <div class="row">
+                            {% for k in link.list %}
+                                <div class="col-sm-3">
+                                    <div class="links-widget links-conversations link2 label-info" onclick="window.open('{{ k.nav_url }}', '_blank')"
+                                         data-toggle="tooltip" data-placement="bottom" title=""
+                                         data-original-title="{{ k.nav_url }}">
+                                        <div class="links-comment-entry mb-2">
+                                            {% if k.nav_img %}
+                                                <a class="links-user-img">
+                                                    <img src="/media/{{ k.nav_img }}" class="img-circle" width="40">
+                                                </a>
+                                            {% endif %}
+                                            <div class="links-comment">
+                                                <a href="{{ k.nav_url }}" class="xe-user-name overflowClip_1" target="_blank">
+                                                    <strong>{{ k.nav_name }}</strong>
+                                                </a>
+                                                <p class="overflowClip_2 text-secondary">{{ k.nav_desc }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endblock %}
+{% block js %}
+    <script>
+        $(function () { $("[data-toggle='tooltip']").tooltip(); });
+    </script>
+{% endblock %}

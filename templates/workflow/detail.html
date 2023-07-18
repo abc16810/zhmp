@@ -1,0 +1,588 @@
+{% extends 'base/_base.html' %}
+{% load static %}
+{% block head_css %}
+    <link href="{% static 'vendor/bootstrap-table/bootstrap-table.min.css' %}" rel="stylesheet">
+{% endblock %}
+{% block header %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h1 class="m-0">{{ object.work_name }}</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block content %}
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <!-- Main content -->
+                    <div class="invoice p-3 mb-3">
+                        <!-- info row -->
+                        <div class="row invoice-info mb-2">
+                            <div class="col-sm-2 invoice-col">
+                                发起人:  <strong>{{ object.work_user_display  }}.</strong><br>
+                                用户名: {{ object.work_user  }}<br>
+                            </div>
+                            <!-- /.col -->
+                            <div class="col-sm-4 invoice-col">
+                                业务组: <b>{{ object.app_name }}</b><br>
+                                工单类型: <b>{{ object.get_work_type_display }}</b><br>
+                                状态: <b>{{ object.get_work_status_display }}</b><br>
+                            </div>
+                            <!-- /.col -->
+                            <div class="col-sm-6 invoice-col">
+                                可执行时间范围
+                                <b>{% if object.run_date_start and object.run_date_end %}
+                                    {{ object.run_date_start }} / {{ object.run_date_end }}
+                                {% else %}
+                                    无限制
+                                {% endif %}</b><br>
+                                发起时间
+                                <b>{{ object.created_at }}</b><br>
+                                结束时间
+                                <b>{{ object.finish_time }}</b><br>
+                            </div>
+                            <!-- /.col -->
+                        </div>
+                        <!-- /.row -->
+                        <!-- Table row -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <nav class="w-100">
+                                    <div class="nav nav-tabs" id="product-tab" role="tablist">
+                                        <a class="nav-item nav-link active" id="detail-app-list" data-toggle="tab"
+                                           href="#applist" role="tab" aria-controls="product-desc"
+                                           aria-selected="true">业务列表</a>
+                                        <a class="nav-item nav-link" id="detail-workflow-log" data-toggle="tab"
+                                           href="#logs" role="tab" aria-controls="product-comments"
+                                           aria-selected="false">工单日志</a>
+                                    </div>
+                                </nav>
+                                <div class="tab-content p-3">
+                                    <div class="tab-pane fade show active" id="applist" role="tabpanel">
+
+                                        <table class="table table-striped table-hover" id="tb-detail-app">
+                                            <thead>
+                                            <tr>
+                                                <th>业务组名称</th>
+                                                <th>业务组负责人</th>
+                                                <th>业务组下业务</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr id="apps-list">
+                                                <td colspan="3">暂无</td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="tab-pane fade" id="logs" role="tabpanel" aria-labelledby="product-comments-tab">
+                                        <table id="tb-detail-logs"
+                                               data-toggle="table"
+                                               data-ajax="ajaxRequest"
+                                               data-search="true"
+                                               data-side-pagination="server"
+                                               data-pagination="true">
+                                            <thead>
+                                            <tr>
+                                                <th data-field="operation_type_desc">操作</th>
+                                                <th data-field="operator_display">操作人</th>
+                                                <th data-field="created_at">操作时间</th>
+                                                <th data-field="operation_info">操作信息</th>
+                                            </tr>
+                                            </thead>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!--最后操作信息-->
+                                {% if last_operation_info %}
+                                    <table data-toggle="table" class="table table-striped table-hover"
+                                           style="table-layout:inherit;overflow:hidden;text-overflow:ellipsis;">
+                                        <thead>
+                                        <tr>
+                                            <th>
+                                                操作信息
+                                            </th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td>
+                                                {{ last_operation_info }}
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                    <br>
+                                {% endif %}
+                                <!--审核备注输入框-->
+                                {% if is_can_review or is_can_cancel or is_can_finish %}
+                                    <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
+                                              placeholder="请填写审核备注/结束/终止原因" rows=3></textarea>
+                                    <br>
+                                {% endif %}
+
+                            </div>
+                            <div class="row no-print">
+                                <div class="col-12">
+                                    <!--审核人修改可执行时间按钮-->
+                                    <!--审核人修改可执行时间按钮-->
+                                    {% if can_timingtask %}
+                                        <form id="from-passed" action="/passed/" method="post" style="display:inline-block;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+                                            <input type="hidden" id="audit_remark" name="audit_remark" value="">
+                                            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#Executabletime"
+                                                   value="可执行时间变更"/>
+                                        </form>
+                                    {% endif %}
+                                    <!--审核通过按钮-->
+                                    {% if is_can_review %}
+                                        <button type="button" id="btnPass" class="btn btn-success">审核通过</button>
+                                    {% endif %}
+                                    <!--立即执行按钮-->
+                                    {% if is_can_exec %}
+                                        <button type="button" id="btnExecuteNow" class="btn btn-danger">
+                                            立即执行</button>
+                                    {% endif %}
+                                    <!--定时执行按钮-->
+                                    {% if is_can_timingtask %}
+                                        {% if object.work_status == 'review_pass' %}
+                                            <input type="button" class="btn btn-info" data-toggle="modal"
+                                                   data-target="#cronComfirm" value="定时执行"/>
+                                        {% elif object.work_status == 'timingtask' %}
+                                            <input type="button" class="btn btn-info" data-toggle="modal"
+                                                   data-target="#cronComfirm" value="执行时间变更"/>
+                                        {% endif %}
+                                    {% endif %}
+                                    <!--终止执行按钮-->
+                                    {% if  is_can_cancel %}
+                                        <input type="button" id="btnCancel" class="btn btn-default" value="终止流程"/>
+                                    {% endif %}
+                                    {% if  is_can_finish %}
+                                        <input type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#finishtask" value="结束流程"/>
+                                    {% endif %}
+                                    {% if  is_can_handle %}
+                                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#handletask">
+                                            处理工单
+                                        </button>
+                                    {% endif %}
+
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.invoice -->
+                    </div><!-- /.col -->
+                </div><!-- /.row -->
+            </div><!-- /.container-fluid -->
+        </div>
+        <!-- 定时执行弹出框 -->
+
+        <div class="modal fade" id="cronComfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+
+                    <div class="modal-header ">
+                        <h5 class="modal-title" id="exampleModalLabel">定时执行任务更新资产</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>执行时间</label>
+                            <div class="input-group date" id="datetimepicker" data-target-input="nearest">
+                                <input type="text" class="form-control datetimepicker-input" id="timing"
+                                       data-target="#datetimepicker" name="run_date"/>
+                                <div class="input-group-append" data-target="#datetimepicker" data-toggle="datetimepicker">
+                                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+                        <button type="button" id="btnAddcronjob" class="btn btn-danger">确认提交</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="handletask" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">处理工单</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>你确认处理该工单?</p>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" id="btnHandlerjob" class="btn btn-success">确认</button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
+        </div>
+
+        <div class="modal fade" id="finishtask" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">结束工单</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>你确认要结束该工单?</p>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                        <button type="button" id="btnFinishjob" class="btn btn-info">确认</button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
+        </div>
+    </section>
+    <!-- /.content -->
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'vendor/bootstrap-table/bootstrap-table.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap-table/locale/bootstrap-table-zh-CN.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap-table/extensions/export/bootstrap-table-export.min.js' %}"></script>
+    <script>
+        //获取工单下业务组详情
+        function get_detail_app_list() {
+            let url = "{% url 'api-apps:group-detail' pk=object.app_group_id %}";
+            $.ajax({
+                dataType: "json",
+                url:url,
+                type:"get",
+                success:function(response){
+                    let base_html = '';
+                    let user = response.user;
+                    let apps = response.apps;
+                    let app_html = '<td>';
+                    let base_user = '<td>暂无</td>';
+                    if (Object.keys(user).length) {
+                        base_user = '<td>' + user.display_name + '</td>'
+                    }
+                    if(apps.length) {
+                        for (let index in apps){
+                            app_html += apps[index].name + '<br>';
+                        }
+                    }
+                    app_html += '</td>';
+                    base_html += '<td>'+ response.node_paths + '</td>' + base_user + app_html;
+                    $("#apps-list").html(base_html)
+                },
+                error:function(response){
+                    $("#apps-list").html('<td colspan="3">暂无</td>')
+                }
+            })
+        }
+        // 获取操作日志
+        function ajaxRequest(params) {
+            let url = '{% url "api-workflow:logs" %}';
+            $.ajax({
+                type: "get",
+                url: url + "?" +  $.param(params.data),
+                dataType: "json",
+                data: {
+                    workflow_id: "{{ object.id }}",
+                    workflow_type: "{{ object.work_type }}"
+                },
+                success: function (data) {
+                    params.success({
+                        'total': data.count,
+                        'rows': data.results,
+                    })
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    Toast.fire({
+                        icon: 'error',
+                        text: errorThrown,
+                        title: "Request Failed!"
+                    })
+                }
+            })
+        }
+
+        $("#datetimepicker").datetimepicker({
+            format: 'YYYY-MM-DD HH:mm',
+            icons: { time: 'far fa-clock' },
+            autoclose: true,
+            minDate: moment().add(2, 'minutes'),   // 不能小于当前日期
+            singleDatePicker: true,
+            showDropdowns : true,
+            showWeekNumbers : false,
+            timePicker12Hour : false,
+            separator:' 至 ',
+            beforeShow:new Date(),
+        });
+    </script>
+    <script>
+        //tab切换,保留当前激活的标签id
+        get_detail_app_list()
+        $(function () {
+            $("#product-tab").on('shown.bs.tab', "a", function (e) {
+                var active_li_id = $(e.target).attr('id');
+                sessionStorage.setItem('workflow_active_li_id', active_li_id);
+                //当前激活的标签id
+                if (active_li_id === 'detail-app-list') {
+                    get_detail_app_list();
+                }
+            });
+        });
+        // 按钮禁用
+        function BtnLoading(elem) {
+            $(elem).attr("data-original-text", $(elem).html());
+            $(elem).prop("disabled", true);
+            $(elem).html('<i class="spinner-border spinner-border-sm"></i> Loading...');
+        }
+
+        function BtnReset(elem) {
+            $(elem).prop("disabled", false);
+            $(elem).html($(elem).attr("data-original-text"));
+        }
+
+        //审核通过
+        $("#btnPass").click(function () {
+            //获取form对象，判断输入，通过则提交
+            let remark = $("#remark").val();
+            var $this = $(this);
+            let url = '{% url "api-workflow:passed" %}';
+            if (remark) {
+                // disable button
+                BtnLoading($this);
+                $.ajax({
+                    type: "post",
+                    url: url,
+                    dataType: "json",
+                    data: {
+                        workflow_id: {{ object.id }},
+                        audit_remark: remark
+                    },
+                    success: function (data) {
+                        if (data.msg) {
+                            Toast.fire({
+                                icon: 'error',
+                                text: data.msg,
+                                title: "操作失败"
+                            });
+
+                        } else {
+                            location.reload();
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        Toast.fire({
+                            icon: 'error',
+                            text: errorThrown,
+                            title: "操作失败"
+                        });
+
+                    }
+                });
+                BtnReset($this)
+            } else {
+                $(this).button("loading");
+                alert('请填写审批备注')
+            }
+        });
+        //审核不通过/终止
+        $("#btnCancel").click(function () {
+            //获取form对象，判断输入，通过则提交
+            let remark = $("#remark").val();
+            var $this = $(this);
+            let url = '{% url "api-workflow:cancel" %}';
+            if (remark) {
+                // disable button
+                BtnLoading($this);
+                $.ajax({
+                    type: "post",
+                    url: url,
+                    dataType: "json",
+                    data: {
+                        workflow_id: {{ object.id }},
+                        audit_remark: remark
+                    },
+                    success: function (data) {
+                        if (data.msg) {
+                            Toast.fire({
+                                icon: 'error',
+                                text: data.msg,
+                                title: "操作失败"
+                            });
+
+                        } else {
+                            location.reload();
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        Toast.fire({
+                            icon: 'error',
+                            text: errorThrown,
+                            title: "操作失败"
+                        });
+
+                    }
+                });
+                BtnReset($this)
+            } else {
+                $(this).button("loading");
+                alert('请填写终止备注')
+            }
+        });
+
+        //定时执行
+        $('#btnAddcronjob').on('click', function () {
+            let url = '{% url "api-workflow:timing" %}';
+            let $this = $(this);
+            BtnLoading($this);
+            $.ajax({
+                type: 'POST',
+                url: url,
+                dataType: "json",
+                data: {
+                    'workflow_id': {{ object.id }},
+                    'run_date': $("#timing").val()
+                },
+                success: function (data) {
+                    if (data.msg) {
+                        Toast.fire({
+                            icon: 'error',
+                            text: data.msg,
+                            title: "操作失败"
+                        });
+                        BtnReset($this)
+                    } else {
+                        location.reload()
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    Toast.fire({
+                        icon: 'error',
+                        text: errorThrown,
+                        title: "操作失败"
+                    });
+                    BtnReset($this)
+                },
+                {#complete: function () {#}
+                {#    location.reload();#}
+                //{#}#}
+
+            })
+        });
+
+        // 立即执行
+        $('#btnExecuteNow').on('click', function () {
+            let url = '{% url "api-workflow:execute" %}';
+            let $this = $(this);
+            BtnLoading($this);
+            $.ajax({
+                type: 'POST',
+                url: url,
+                dataType: "json",
+                data: {
+                    'workflow_id': {{ object.id }}
+                },
+                success: function (data) {
+                    if (data.msg) {
+                        Toast.fire({
+                            icon: 'error',
+                            text: data.msg,
+                            title: "操作失败"
+                        });
+                    } else {
+                        location.reload()
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    Toast.fire({
+                        icon: 'error',
+                        text: errorThrown,
+                        title: "操作失败"
+                    });
+                    BtnReset($this)
+                },
+            })
+        });
+
+        $("#btnHandlerjob").on("click", function () {
+            let url = '{% url "api-workflow:handler" %}';
+            $.ajax({
+                type: 'POST',
+                url: url,
+                dataType: "json",
+                data: {
+                    'workflow_id': {{ object.id }}
+                },
+                success: function (data) {
+                    if (data.msg) {
+                        Toast.fire({
+                            icon: 'error',
+                            text: data.msg,
+                            title: "操作失败"
+                        });
+                    } else {
+                        location.reload()
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    Toast.fire({
+                        icon: 'error',
+                        text: errorThrown,
+                        title: "操作失败"
+                    });
+                },
+            })
+
+        })
+        $("#btnFinishjob").on("click", function () {
+            let url = '{% url "api-workflow:finish" %}';
+            $.ajax({
+                type: 'POST',
+                url: url,
+                dataType: "json",
+                data: {
+                    'workflow_id': {{ object.id }},
+                    audit_remark: $("#remark").val()
+                },
+                success: function (data) {
+                    if (data.msg) {
+                        Toast.fire({
+                            icon: 'error',
+                            text: data.msg,
+                            title: "操作失败"
+                        });
+                    } else {
+                        location.reload()
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    Toast.fire({
+                        icon: 'error',
+                        text: errorThrown,
+                        title: "操作失败"
+                    });
+                },
+            })
+
+        })
+    </script>
+{% endblock %}

@@ -1,0 +1,143 @@
+{% extends 'base/_base.html' %}
+{% load static %}
+{% block preloader %}
+{% endblock %}
+
+{% block header %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">机房详情</h1>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">首页</a></li>
+                        <li class="breadcrumb-item active">机房</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div>
+    </div>
+{% endblock %}
+{% block content %}
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title" id="name">加载中</h3>
+                    </div>
+                    <div class="card-body" id="baseinfo">
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+            </div>
+            <!-- /.col -->
+            <div class="col-md-9">
+                <div class="card card-primary card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">下属机柜</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body p-0">
+                        <div class="table-responsive mailbox-messages">
+                            <table class="table table-hover table-striped">
+                                <tbody id="cabinet-list">
+
+                                </tbody>
+                            </table>
+                            <!-- /.table -->
+                        </div>
+                        <!-- /.mail-box-messages -->
+                    </div>
+
+                </div>
+                <!-- /.card -->
+            </div>
+            <!-- /.col -->
+        </div>
+        <!-- /.row -->
+    </section>
+    <!-- /.content -->
+{% endblock %}
+{% block js %}
+    <script>
+        let Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+        $(function () {
+            let url = "{% url 'api-asset:idc-detail' pk=pk %}";
+            $.ajax({
+                dataType: "JSON",
+                url:url, //请求地址
+                type:"GET",  //提交类似
+                contentType: "application/json",
+                success:function(response){
+                    console.log(response)
+                    let base_info = '';
+                    $("#name").html(response["idc_name"]);
+                    base_info = '            <strong><i class="fas fa-home mr-1"></i> 区域</strong>\n' +
+                        '                        <p class="text-muted">\n' +
+                                                    response["idc_zone_name"] +
+                        '                        </p>\n' +
+                        '                        <hr>\n' +
+                        '                        <strong><i class="fas fa-map-marker-alt mr-1"></i> 位置</strong>\n' +
+                                                 '<p class="text-muted">'  + response["idc_address"] + '</p>\n' +
+                        '                        <hr>\n' +
+                        '                        <strong><i class="fas fa-search-location mr-1"></i> 运营商</strong>\n' +
+                                                 '<p class="text-muted">'  + response["idc_operator"] + '</p>\n' +
+                        '                        <hr>\n' +
+                        '                        <strong><i class="fas fa-user-alt mr-1"></i> 联系人</strong>\n' +
+                                                 '<p class="text-muted">'  + response["idc_contact"] + '</p>\n' +
+                        '                        <hr>\n' +
+                        '                        <strong><i class="fas fa-phone-alt mr-1"></i> 电话</strong>\n' +
+                        '                        <p class="text-muted">\n' +
+                        '                            <span class="tag tag-danger">'+ response["idc_phone"] +'</span>\n' +
+                        '                        </p><hr>' +
+                        '                        <strong><i class="fas fa-transgender-alt mr-1"></i> 带宽</strong>\n' +
+                        '                        <p class="text-muted">\n' +
+                        '                            <span class="tag tag-danger">'+ response["idc_bandwidth"] +'</span>\n' +
+                        '                        </p><hr>' +
+                        '                        <i class="fas fa-calendar-times mr-1"></i> 创建时间\n' +
+                        '                        <p class="text-muted">\n' +
+                        '                            <span class="tag tag-danger">'+ response["created_at"] +'</span>\n' +
+                        '                        </p><hr>' +
+                        '                        <i class="fas fa-calendar-times mr-1"></i> 更新时间\n' +
+                        '                        <p class="text-muted">\n' +
+                        '                            <span class="tag tag-danger">'+ response["updated_at"] +'</span>\n' +
+                        '                        </p><hr>' +
+                        '                        <strong><i class="far fa-file-alt mr-1"></i> 备注</strong>\n' +
+                        '                        <p class="text-muted">'+ response["idc_comment"] +'</p>'
+                    $("#baseinfo").html(base_info);
+                    if (response["cabinet"].length){
+                        let cabinet_list = '';
+                        for (let i=0; i <response["cabinet"].length; i++){
+                            console.log(response["cabinet"][i])
+                            cabinet_list += '<tr>' +
+                                '            <td><a href="">'+ response["cabinet"][i]["id"] +'</a></td>' +
+                                '            <td><b>'+ response["cabinet"][i]["cabinet_name"] +
+                                '            </b></td>\n' +
+                                '            <td></td>\n' +
+                                '          <td class="mailbox-date">'+ response["cabinet"][i]["cabinet_comment"]  +'</td></tr>'
+                        }
+                        $("#cabinet-list").html(cabinet_list)
+                    } else {
+                        $("#cabinet-list").html('<tr><td>暂无</td></tr>')
+                    }
+                },
+                error:function(response){
+                    Toast.fire({
+                        icon: 'error',
+                        text: response.responseText,
+                        title: "Request Failed!"
+                    })
+                }
+            })
+        })
+    </script>
+{% endblock %}

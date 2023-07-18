@@ -1,0 +1,24 @@
+{% load mytags %}
+<nav aria-label="Page Navigation">
+    {% if is_paginated %}
+        <ul class="pagination pagination-sm m-0">
+            {% for page in paginator.num_pages|paginator_num:page_obj.number %}
+                <li class="page-item {% if page == page_obj.number %}disabled{% endif %}">
+                    {% if page == "." %}
+                        <a class="page-link">...</a></li>
+                    {% else %}
+                        <a class="page-link rounded bpage {% if page == page_obj.number %} active{% endif %}"
+                           href="?page={{ page }}" title="第{{ page }}页">{{ page }}
+                        </a></li>
+                    {% endif %}
+            {% endfor %}
+            <li class="list-inline-item ml-2">
+                <span class="u-pagination-v1__item-info g-pa-7-14">
+                    {% spaceless %}
+                        显示第 {{ page_obj.start_index }} - {{ page_obj.end_index }} 项结果，共 {{ paginator.count }} 项
+                    {% endspaceless %}
+                </span>
+            </li>
+        </ul>
+    {% endif %}
+</nav>

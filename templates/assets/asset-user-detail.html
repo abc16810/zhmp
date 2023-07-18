@@ -1,0 +1,176 @@
+{% extends 'base/_base.html' %}
+{% load static %}
+{% block preloader %}
+{% endblock %}
+
+{% block header %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">资产用户详情</h1>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">首页</a></li>
+                        <li class="breadcrumb-item active">资产用户</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div>
+    </div>
+{% endblock %}
+{% block content %}
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-md-3">
+                <!-- Profile Image -->
+                <div class="card card-primary card-outline">
+                    <div class="card-body box-profile" id="baseuser">
+
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+
+            </div>
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">资产</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body table-responsive p-0" style="height: 500px;">
+                        <table class="table table-head-fixed text-nowrap">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>编号</th>
+                                <th>类型</th>
+                                <th>状态</th>
+                                <th>U数</th>
+                                <th>IP</th>
+                                <th>主机名</th>
+                                <th>详情</th>
+                            </tr>
+                            </thead>
+                            <tbody id="assets-list">
+
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+            </div>
+        </div>
+        <!-- /.row -->
+    </section>
+    <!-- /.content -->
+{% endblock %}
+{% block js %}
+    <script>
+        let Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+        $(function () {
+            let url = "{% url 'api-asset:sshuser-detail' pk=pk %}";
+            $.ajax({
+                dataType: "JSON",
+                url:url, //请求地址
+                type:"GET",  //提交类似
+                contentType: "application/json",
+                success:function(response){
+                    console.log(response)
+                    let base_info = '';
+                    let p = '<span class="float-right text-red"><i class="fas fa-times"></i></span>';
+                    if (response.password){
+                        p = '<span class="float-right text-green"><i class="fas fa-check"></i></span>'
+                    }
+                    let key = '<span class="float-right text-red"><i class="fas fa-times"></i></span>';
+                    if (response.pkey){
+                        key = '<span class="float-right text-green"><i class="fas fa-check"></i></span>'
+                    }
+                    let fkey = '<span class="float-right text-red"><i class="fas fa-times"></i></span>';
+                    if (response.pkey_path){
+                        fkey = '<span class="float-right text-green"><i class="fas fa-check"></i></span>'
+                    }
+                    let b = '<li class="list-group-item"><b>Become </b>' +
+                        '<span class="float-right text-red"><i class="fas fa-times"></i></span></li>';
+                    if (response.become) {
+                        b = '<li class="list-group-item"><b>Become </b>' +
+                                '<span class="float-right text-green"><i class="fas fa-check"></i></span></li>' +
+                             '<li class="list-group-item">Become 用户<span class="badge bg-gray float-right">' +
+                            response.become_user + '</span></li>' +
+                             '<li class="list-group-item">Become 方法<span class="badge bg-gray float-right">' +
+                            response.become_method + '</span></li>' +
+                            '<li class="list-group-item">Become 密码<span class="badge text-warning float-right">' +
+                            '****' + '</span></li>'
+                    }
+                    base_info = '<h3 class="profile-username text-center">'+ response.sign +'</h3>' +
+                        '        <p class="text-muted text-center">'+ response.username + '</p>' +
+                        '        <ul class="list-group list-group-unbordered mb-3">\n' +
+                        '                            <li class="list-group-item">\n' +
+                        '                                <b>密码验证 : </b>' +  p +
+                        '                            </li>\n' +
+                        '                            <li class="list-group-item">\n' +
+                        '                                <b>私钥验证</b>' + key  +
+                        '                            </li>\n' +
+                        '                            <li class="list-group-item">\n' +
+                        '                                <b>私钥文件验证</b>' + fkey  +
+                        '                            </li>\n' +
+                        '                            <li class="list-group-item">\n' +
+                        '                                <b>端 口</b><span class="badge bg-primary float-right">' +
+                                          response.port  + '</span>' +
+                        '                            </li>\n' + b +
+                        '                             <li class="list-group-item">' +
+                        '                                创建者<span class="badge bg-info float-right">' +
+                                          response.created_by  + '</span>' +
+                        '                            </li>\n' +
+                        '                             <li class="list-group-item">' +
+                        '                                创建时间<span class="badge bg-dark float-right">' +
+                                          response.created_at  + '</span>' +
+                        '                            </li>\n' +
+                        '                             <li class="list-group-item">' +
+                        '                                更新时间<span class="badge bg-dark float-right">' +
+                                          response.updated_at  + '</span>' +
+                        '                            </li>\n' +
+                        '                        </ul>\n' +
+                        '                        <a href="" class="btn btn-primary btn-block"><b>关联资产</b></a>'
+
+                    $("#baseuser").html(base_info);
+                    if (response["assets"].length){
+                        let assets_list = '';
+                        for (let i=0; i <response["assets"].length; i++){
+                            let asset_detail_url = '{% url "asset-detail" pk="00000" %}'.replace("00000", response["assets"][i]["assets_id"]);
+                            assets_list += '<tr>' +
+                                '      <td><span class="badge badge-success">'+ response["assets"][i]["assets_id"] +'</span></td>' +
+                                '      <td>'+ response["assets"][i]["number"] +'</td>\n' +
+                                '      <td>'+ response["assets"][i]["assets_type"] +'</td>' +
+                                '      <td>'+ response["assets"][i]["status"] +'</td>\n' +
+                                '      <td>'+ response["assets"][i]["u"] +'</td>\n' +
+                                '      <td>'+ response["assets"][i]["ip"] +'</td>\n' +
+                                '      <td>'+ response["assets"][i]["hostname"] +'</td>\n' +
+                                '<td><a class="detail" href="'+ asset_detail_url +'" title="详情"><i class="fa fa-list-alt"></i></a></td>'
+
+                            assets_list += '</tr>'
+                        }
+                        $("#assets-list").html(assets_list)
+                    } else {
+                        $("#assets-list").html('<tr><td>暂无</td></tr>')
+                    }
+                },
+                error:function(response){
+                    Toast.fire({
+                        icon: 'error',
+                        text: response.responseText,
+                        title: "Request Failed!"
+                    })
+                }
+            })
+        })
+    </script>
+{% endblock %}

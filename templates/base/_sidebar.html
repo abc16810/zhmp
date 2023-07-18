@@ -1,0 +1,186 @@
+{% load static %}
+<!-- Main Sidebar Container -->
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="" class="brand-link">
+        <img src="{%  static 'img/AdminLTELogo.png' %}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity:.8">
+        <span class="brand-text font-weight-light">资产管理平台</span>
+    </a>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Sidebar user panel (optional) -->
+        {% if request.user.is_authenticated %}
+            <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                <div class="image">
+                    <img src="{% static 'img/user2-160x160.jpg' %}" class="img-circle elevation-2" alt="User Image">
+                </div>
+                <div class="info">
+                    <a href="#" class="d-block">
+                        {{ request.user.display|default:'管理员' }}
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+        <!-- Sidebar Menu -->
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                <!-- Add icons to the links using the .nav-icon class
+                     with font-awesome or any other icon font library -->
+                <li class="nav-item">
+                    <a href="{% url 'bashboard' %}" class="nav-link">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-list"></i>
+                        <p>资产管理<i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{% url 'idc' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>机房</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'cabinet' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>机柜</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'asset' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>资产列表</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'asset-user' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>资产用户</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-copy"></i>
+                        <p>
+                            任务管理
+                            <i class="fas fa-angle-left right"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="pages/layout/top-nav.html" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>成功的任务</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="pages/layout/top-nav-sidebar.html" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>失败的任务</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="pages/layout/boxed.html" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>任务调度</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-chart-pie"></i>
+                        <p>
+                            工单管理
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{% url 'workflow-config-view' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>工单流程配置</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'workflow-add-view' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>工单申请</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'workflow-list' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>工单列表</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-tree"></i>
+                        <p>
+                            业务管理
+                            <i class="fas fa-angle-left right"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{% url 'apps-list' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>业务列表</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'apps-group' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>业务组管理</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-edit"></i>
+                        <p>
+                            系统日志
+                            <i class="fas fa-angle-left right"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{% url 'audit-log' %}" class="nav-link">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>登陆日志</p>
+                            </a>
+                        </li>
+{#                        <li class="nav-item">#}
+{#                            <a href="{% url 'work-log' %}" class="nav-link">#}
+{#                                <i class="far fa-circle nav-icon"></i>#}
+{#                                <p>工单日志</p>#}
+{#                            </a>#}
+{#                        </li>#}
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'nav-list' %}" class="nav-link">
+                        <i class="nav-icon fas fa-th"></i>
+                        <p>
+                            常用链接
+                            <span class="right badge badge-danger">New</span>
+                        </p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+</aside>

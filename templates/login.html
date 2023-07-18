@@ -1,0 +1,169 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>运维管理系统 - Login</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="{% static 'plugins/sweetalert2/sweetalert2.css' %}">
+    <!-- icheck bootstrap -->
+    <link rel="stylesheet" href="{% static 'plugins/icheck-bootstrap/icheck-bootstrap.min.css' %}">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{% static 'css/adminlte.min.css' %}">
+</head>
+<body class="hold-transition login-page">
+<!-- Flexbox container for aligning the toasts -->
+<div aria-live="polite" aria-atomic="true" class="d-flex justify-content-center align-items-center w-100">
+    <!-- Then put toasts within -->
+    <div class="toast text-bg-warning border-0" role="alert" aria-live="assertive" aria-atomic="true" id="ErrorToast"
+         data-bs-delay="500000">
+        <div class="d-flex">
+            <div class="toast-body" id="ErrorMess"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<div class="login-box">
+    <!-- /.login-logo -->
+    <div class="card card-outline card-primary">
+        <div class="card-header text-center">
+            {#            <span class="h1"><b>运维管理</b>系统</span>#}
+        </div>
+        <div class="card-body">
+            {% if form.errors %}
+                <div class="alert alert-danger alert-dismissible">
+                    <h5><i class="icon fa fa-ban mr-2"></i>登陆错误</h5>
+                    {% if 'captcha' in form.errors %}
+                        <p>验证码</p>
+                    {% endif %}
+                    {{ form.non_field_errors.as_text }}
+                </div>
+            {% endif %}
+            <form role="form" id="LoginForm" >
+                {% csrf_token %}
+                {% if form.redirect %}{{ form.redirect }}{% endif %}
+                <div class="input-group mb-3">
+                    {% if form.username %}
+                        {{ form.username }}
+                    {% elif form.email %}
+                        {{ form.email }}
+                    {% else %}
+                        {{ form.username_email }}
+                    {% endif %}
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-users"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    {{ form.password }}
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-lock"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-8">
+
+                        <div class="icheck-primary">
+                            {{ form.remember }}
+                            <label  for="{{ form.remember.id_for_label }}">
+                                {{ form.remember.label }}</label>
+                        </div>
+                    </div>
+                    <!-- /.col -->
+                    <div class="col-4">
+                        <button type="button" id="submit" class="btn btn-primary btn-block">登录</button>
+                    </div>
+                    <!-- /.col -->
+                </div>
+            </form>
+            {#            <div class="social-auth-links text-center mt-2 mb-3">#}
+            {#                <a href="#" class="btn btn-block btn-primary">#}
+            {#                    <i class="fab fa-facebook mr-2"></i> Sign in using Facebook#}
+            {#                </a>#}
+            {#                <a href="#" class="btn btn-block btn-danger">#}
+            {#                    <i class="fab fa-google-plus mr-2"></i> Sign in using Google+#}
+            {#                </a>#}
+            {#            </div>#}
+            <!-- /.social-auth-links -->
+
+            {#            <p class="mb-1">#}
+            {#                <a href="forgot-password.html">忘记密码</a>#}
+            {#            </p>#}
+            {#            <p class="mb-0">#}
+            {#                <a href="register.html" class="text-center">注册</a>#}
+            {#            </p>#}
+        </div>
+        <!-- /.card-body -->
+    </div>
+</div>
+<!-- jQuery -->
+<script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+<!-- Bootstrap 4 -->
+<script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<!-- SweetAlert2 -->
+<script src="{% static 'plugins/sweetalert2/sweetalert2.min.js' %}"></script>
+<!-- AdminLTE App -->
+<script src="{% static 'js/adminlte.min.js' %}"></script>
+<script>
+    $(function () {
+        var Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+
+        $('#submit').on('click', function () {
+            var url = "{% url 'jwt:login' %}";
+            var textinput = document.querySelector('#id_password').value;
+            if (textinput == "") {
+                document.querySelector('#LoginForm').classList.add('was-validated')
+            } else {
+                var form = new FormData(document.getElementById("LoginForm"));
+                console.log(form)
+                $.ajax({
+                    type: "post",
+                    url: url,
+                    data: form,
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    error: function (data) {
+                        if (data.responseJSON == undefined) {
+                            Toast.fire({
+                                icon: 'error',
+                                title: '登陆失败'
+                            })
+
+                        } else {
+                            var info = data.responseJSON.msg;
+                            Toast.fire({
+                                icon: 'error',
+                                text: info,
+                                title: "Error"
+                            })
+                        }
+                    },
+                    success: function (data) {
+                        var info = data.redirect;
+                        window.location.href = info
+                    }
+                });
+            }
+        })
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,296 @@
+{% extends 'base/_base.html' %}
+{% load static mytags %}
+{% block preloader %}
+{% endblock %}
+{% block head_css %}
+    <link href="{% static 'vendor/bootstrap-table/bootstrap-table.min.css' %}" rel="stylesheet">
+{% endblock %}
+{% block header %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">业务列表</h1>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="#">首页</a></li>
+                        <li class="breadcrumb-item active">资产</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div>
+    </div>
+{% endblock %}
+{% block content %}
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <!-- 审核列表的表格-->
+                            <div id="toolbar" class="form-inline pull-left">
+                                <div class="form-group mr-1">
+                                    <select id="apps-env" class="form-control select2bs4"
+                                            data-live-search="true">
+                                        <option value="" selected="selected">环境</option>
+                                        {% for k, v  in apps_env.items %}
+                                            <option value="{{ k }}" class="fa-thin fa-arrows-rotate">{{ v }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group mr-1">
+                                    <select id="deploy-mode" class="form-control select2bs4"
+                                            data-live-search="true">
+                                        <option value="" selected="selected">部署模式</option>
+                                        {% for k, v  in deploy_mode.items %}
+                                            <option value="{{ k }}" class="fa-thin fa-arrows-rotate">{{ v }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                {% if develop_users %}
+                                    <div class="form-group mr-1">
+                                        <select id="develop-users" class="form-control select2bs4">
+                                            <option value="" selected="selected">开发负责人</option>
+                                            {% for user  in develop_users %}
+                                                <option value="{{ user }}" class="fa-thin fa-arrows-rotate">{{ user }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                {% endif %}
+                                <div class="form-group mr-1">
+                                    <select id="apps-group" class="form-control select2bs4">
+                                        <option value="" selected="selected">资源组</option>
+                                        {% for item  in apps_group %}
+                                            <option value="{{ item.0 }}" class="fa-thin fa-arrows-rotate">
+                                                {{ item.1 }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="apps-list" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}
+{% block js %}
+    <script src="{% static 'vendor/bootstrap-table/bootstrap-table.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap-table/locale/bootstrap-table-zh-CN.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap-table/extensions/export/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'vendor/bootstrap-table/extensions/export/tableExport.min.js' %}"></script>
+    <script>
+        function get_apps_list() {
+            //采取异步请求
+            //初始化table
+            let apps_list_url = "{% url 'api-apps:list' %}";
+            $('#apps-list').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
+                method: 'get',
+                contentType: "application/x-www-form-urlencoded",
+                url: apps_list_url,
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true,                   //是否显示分页（*）
+                sortable: true,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                pageSize: 10,                     //每页的记录行数（*）
+                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                search: true,                      //是否显示表格搜索
+                strictSearch: false,                //是否全匹配搜索
+                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                showRefresh: true,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                clickToSelect: true,                //是否启用点击选中行
+                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                detailView: true,                  //是否显示父子表
+                //格式化详情
+                detailFormatter: function (index, row) {
+                    var html = [];
+                    let inner_html = '<div class="row"><div class="col-md-4 col-sm-12 col-xs-12"><legend>基本信息' +
+                        '</legend><table class="table table-striped" style="padding-left:50px;" ' +
+                        'cellspacing="0" cellpadding="5" border="0"><tbody>';
+                    let tabale_list = '<div class="col-md-8 col-sm-12 col-xs-12"><legend>服务器</legend>' +
+                        '<table class="table table-striped" style="padding-left:50px;" cellspacing="0" cellpadding="5" border="0">' +
+                        '<tbody><tr><th>主机名</th><th>IPV4</th><th>CPU</th><th>系统</th><th>平台</th><th>内存(MB)</th></tr>';
+                    $.each(row, function (key, value) {
+                        if (key === 'deploy_path') {
+                            //替换标签
+                            value = value.replace(/&/g, "&amp;");
+                            value = value.replace(/</g, "&lt;");
+                            value = value.replace(/>/g, "&gt;");
+                            value = value.replace(/"/g, "&quot;");
+                            //替换所有的换行符
+                            value = value.replace(/\r\n/g, "<br>");
+                            value = value.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            value = value.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + value + '</span>');
+                            inner_html += '<tr><td class="col-md-1 col-sm-12 col-xs-12">部署路径</td>' +
+                                '<td class="col-md-1 col-sm-12 col-xs-12">'+ value +'</td></tr>'
+                        }
+                        if (key == 'comment') {
+                            inner_html += '<tr><td class="col-md-1 col-sm-12 col-xs-12">备 注:</td>' +
+                                '<td class="col-md-1 col-sm-12 col-xs-12">'+ value +'</td></tr>'
+                        }
+                    });
+                    inner_html += '</tbody></table></div>';
+                    if (Object.keys(row.assets).length) {
+                        let assets_list = ''
+                        $.each(row.assets, function (key, value) {
+                            assets_list += '<tr><td class="col-md-1 col-sm-12 col-xs-12">'+ value.hostname +'</td>' +
+                                '<td class="col-md-1 col-sm-12 col-xs-12">'+ value.ip +'</td>' +
+                                '<td class="col-md-1 col-sm-12 col-xs-12">'+ value.cpu +'</td>' +
+                                '<td class="col-md-1 col-sm-12 col-xs-12">'+ value.system +'</td>' +
+                                '<td class="col-md-1 col-sm-12 col-xs-12">'+ value.platform +'</td>' +
+                                '<td class="col-md-1 col-sm-12 col-xs-12">'+ value.ram_total +'</td>' +
+
+                            '</tr>'
+                        })
+                        tabale_list += assets_list + '</tbody></table></div>'
+                    } else {
+                        tabale_list += '<tr><td colspan="6">暂无</td></tr></tbody></table></div>'
+                    }
+                    // return html.join('');
+                    inner_html += tabale_list + '</div>';
+                    return inner_html
+                },
+                onExpandRow: function (index, row, $detail) {
+                    //console.log(index, row, $detail);
+                },
+                locale: 'zh-CN',                    //本地化
+                toolbar: "#toolbar",               //指明自定义的toolbar
+                queryParamsType: 'limit',
+                queryParams:
+                    function (params) {
+                        return {
+                            limit: params.limit,
+                            offset: params.offset,
+                            env: $("#apps-env").val(),
+                            deploy_mode: $("#deploy-mode").val(),
+                            develop_user: $("#develop-users").val(),
+                            group: $("#apps-group").val(),
+                            search: params.search
+                        }
+                    },
+                columns: [{
+                    title: '应用名称',
+                    field: 'name',
+                    // visible: false // 默认不显示
+                },{
+                    title: '环境',
+                    field: 'env',
+                    formatter: function (value, row, index) {
+                        if (value === 'pro') {
+                            return '<span class="right badge badge-primary">生产环境</span>'
+                        } else {
+                            return '<span class="right badge badge-info">测试环境</span>'
+                        }
+                    }
+                }, {
+                    title: '开发负责人',
+                    field: 'develop_user',
+                    formatter: function (value, row, index) {
+                        if (value) {
+                            return value
+                        } else {
+                            return '暂无'
+                        }
+                    }
+                },{
+                    title: '运维负责人',
+                    field: 'deploy_user',
+                    formatter: function (value, row, index) {
+                        if (value) {
+                            return value
+                        } else {
+                            return '暂无'
+                        }
+                    }
+                },{
+                    title: '业务组',
+                    field: 'group.group_name'
+
+                },{
+                    title: '部署路径',
+                    field: 'deploy_path',
+                    formatter: function (value, row, index) {
+                        var _path=row.deploy_path
+                        if (!_path) {
+                            return _path
+                        }
+                        if (_path.length > 15) {
+                            return _path.substr(0, 15) + '...';
+                        } else {
+                            return value
+                        }
+                    }
+                },{
+                    title: '部署方式',
+                    field: 'deploy_mode'
+                },{
+                    title: '上线时间',
+                    field: 'up_date'
+                },{
+                    title: '到期时间',
+                    field: 'down_date'
+                }
+                    /*{
+                    title: '操作',
+                    field: 'operation',
+                    formatter: function (value, row, index) {
+                        let aaa = "<a href=\"/detail/" + row.id + "/\" class=\"btn btn-primary btn-icon-split " +
+                            "btn-sm\">\n" + "<span class=\"text\">详情</span>\n" + "</a>";
+                        return aaa
+                    }
+                }*/
+                ],
+                onLoadSuccess: function () {
+                },
+                onLoadError: onLoadErrorCallback,
+                onSearch: function (e) {
+                    //传搜索参数给服务器
+                    this.queryParams(e)
+                },
+                responseHandler: function (res) {
+                    //在ajax获取到数据，渲染表格之前，修改数据源
+                    return {
+                        "total": res.count,
+                        "rows": res.results
+                    }
+                }
+
+            })
+        }
+        //筛选变动自动刷新
+        $("#apps-env").change(function () {
+            get_apps_list();
+        });
+
+        $("#deploy-mode").change(function () {
+            get_apps_list();
+        });
+        $("#develop-users").change(function () {
+            get_apps_list();
+        });
+        $("#apps-group").change(function () {
+            get_apps_list();
+        });
+
+        //初始化数据
+        $(document).ready(function () {
+            get_apps_list();
+        });
+    </script>
+{% endblock %}
