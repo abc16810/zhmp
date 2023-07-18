@@ -1,9 +1,5 @@
 
 
-
-
-
-
 ## 依赖
 python 版本 3.8.10  
 django 4.2
@@ -59,29 +55,3 @@ cp logs.ini.template logs.ini
 ```shell
 docker-compose up -d 
 ```
-
-#### 参考
-    OpsManage
-    https://github.com/open-cmdb/cmdb
-    https://demo.archerydms.com/dashboard/
-    https://github.com/guohongze/adminset/wiki/AdminSet
-    https://demo.improvely.com/project/webshop
-    https://github.com/wylok/sparrow
-    
-    
-#### 审核流程
-等待审核-> 审核通过 -> 执行中 -> 正常结束
-        - 业务类型为自动更新资产信息（0） 管理员和申请人可以 -> 定时执行 ->正常结束  
-        - 其他业务类型  (管理员)认领
-                   -> 执行异常 -> 终止流程  (自动)
-                   -> 定时执行 ->正常结束   (自动)
-                              -> 执行异常 -> 终止流程   (自动)
-        -> 审核不通过 -> 终止流程  （自动）
-        > 终止流程  (审核人终止)
-        
-等待审核的管理员/审核人/申请人可终止
-其他状态管理员可终止
-
-
-管理员和权限组中的人员可以审核
-业务中的成员可以提交改业务下的工单
