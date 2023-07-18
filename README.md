@@ -39,6 +39,27 @@ mysql 8
 - 加密解密  cryptography[mirage]
 - 从.env文件读取为环境变量  django-environ
 
+
+#### 部署
+1、部署mysql和redis （略）
+
+2、设置变量文件连接db和redis
+```shell
+mv .env.template  .env
+# 配置数据库和 redis
+DATABASE_URL="mysql://root:123456@192.168.1.1:3306/mp_new"
+# cache
+CACHE_URL="redis://:123456@192.168.1.1:6379/0"
+```
+3、设置日志
+```shell
+cp logs.ini.template logs.ini
+```
+4、启动
+```shell
+docker-compose up -d 
+```
+
 #### 参考
     OpsManage
     https://github.com/open-cmdb/cmdb
